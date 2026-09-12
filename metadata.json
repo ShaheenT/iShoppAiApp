@@ -1,0 +1,6 @@
+{
+  "name": "iShopp AI",
+  "description": "South African retail intelligence and smart shopping platform. Snap in-store specials, scan empty or finished pantry items at home, optimize multi-store routes, and submit grocery lists for tiered delivery.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
