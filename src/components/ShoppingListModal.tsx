@@ -18,9 +18,12 @@ import {
   Check,
   Receipt,
   RotateCcw,
+  Database,
+  WifiOff,
 } from 'lucide-react';
 import { ShoppingListItem, Special, DeliveryTier, DeliveryOrder } from '../types/index.js';
 import { DELIVERY_TIERS, DeliveryTierDetail } from '../data/finishedItemsData.js';
+import { RouteOptimizerView } from './RouteOptimizerView.js';
 
 interface ShoppingListModalProps {
   isOpen: boolean;
@@ -31,6 +34,7 @@ interface ShoppingListModalProps {
   onRemoveItem: (id: string) => void;
   onToggleItem: (id: string) => void;
   onOpenPantryScan: () => void;
+  onOpenRouteOptimizer?: () => void;
   userCity?: string;
 }
 
@@ -43,9 +47,10 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
   onRemoveItem,
   onToggleItem,
   onOpenPantryScan,
+  onOpenRouteOptimizer,
   userCity = 'Cape Town',
 }) => {
-  const [activeTab, setActiveTab] = useState<'list' | 'deliver' | 'orders'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'route' | 'deliver' | 'orders'>('list');
   const [newItemText, setNewItemText] = useState('');
   const [selectedTier, setSelectedTier] = useState<DeliveryTier>('concierge_multistore');
 
@@ -113,12 +118,19 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-extrabold text-slate-900 text-base leading-tight">
                   iShopp Smart Grocery List
                 </h3>
                 <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                   {items.length} items
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200/80"
+                  title="All shopping list items and checks are saved to IndexedDB for 100% offline access"
+                >
+                  <Database className="w-2.5 h-2.5 text-emerald-600" />
+                  Offline Ready
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -148,9 +160,10 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
         </div>
 
         {/* View Tabs */}
-        <div className="flex border-b border-slate-100 bg-slate-50/70 p-1.5 text-xs font-bold text-slate-600">
+        <div className="flex border-b border-slate-100 bg-slate-50/70 p-1.5 text-xs font-bold text-slate-600 gap-1">
           <button
             onClick={() => setActiveTab('list')}
+            id="shopping-list-tab-list"
             className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'list'
                 ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
@@ -158,11 +171,25 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
-            <span>My List & Store Route</span>
+            <span>My List</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('route')}
+            id="shopping-list-tab-route"
+            className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === 'route'
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                : 'hover:text-slate-900'
+            }`}
+          >
+            <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Route Map (D3)</span>
           </button>
 
           <button
             onClick={() => setActiveTab('deliver')}
+            id="shopping-list-tab-deliver"
             className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'deliver'
                 ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
@@ -170,12 +197,13 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
             }`}
           >
             <Truck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Submit for Delivery (3 Tiers)</span>
+            <span>Delivery</span>
           </button>
 
           {orderPlaced && (
             <button
               onClick={() => setActiveTab('orders')}
+              id="shopping-list-tab-orders"
               className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'orders'
                   ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
@@ -183,7 +211,7 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
               }`}
             >
               <Clock className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Live Order Tracking</span>
+              <span>Tracking</span>
             </button>
           )}
         </div>
@@ -349,19 +377,43 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({
                     <span className="text-sm font-black text-white">R{subtotal.toFixed(2)}</span>
                   </div>
 
-                  <button
-                    onClick={() => setActiveTab('deliver')}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
-                  >
-                    <Truck className="w-3.5 h-3.5" />
-                    <span>Or Have iShopp Deliver This List</span>
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <button
+                      onClick={() => setActiveTab('route')}
+                      id="view-optimized-route-btn"
+                      className="py-2.5 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-emerald-500/20"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Plot Route Map (D3)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('deliver')}
+                      id="shopping-list-deliver-btn"
+                      className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Order Delivery</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 2: SUBMIT FOR DELIVERY WITH 3 TIERS */}
+          {/* TAB 2: D3 ROUTE OPTIMIZATION VIEW */}
+          {activeTab === 'route' && (
+            <div className="h-[600px] -m-5 flex flex-col">
+              <RouteOptimizerView
+                items={items}
+                specials={specials}
+                userCity={userCity}
+                onToggleItemCheck={onToggleItem}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: SUBMIT FOR DELIVERY WITH 3 TIERS */}
           {activeTab === 'deliver' && (
             <div className="space-y-4">
               <div className="text-xs text-slate-500">

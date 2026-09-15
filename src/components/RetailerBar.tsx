@@ -1,6 +1,7 @@
 import React from 'react';
 import { RETAILERS } from '../../server/seedData.js';
 import { RetailerId } from '../types/index.js';
+import { RetailerLogo } from './RetailerLogo.js';
 
 interface RetailerBarProps {
   selectedRetailer: string;
@@ -44,10 +45,7 @@ export const RetailerBar: React.FC<RetailerBarProps> = ({
                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: retailer.primaryColor }}
-                />
+                <RetailerLogo retailerId={retailer.id} size={18} />
                 <span>{retailer.name}</span>
                 {retailer.loyaltyProgram && (
                   <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-normal hidden sm:inline">

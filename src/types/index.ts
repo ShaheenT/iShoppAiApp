@@ -136,6 +136,7 @@ export interface UserProfile {
   total_views: number;
   account_status: string;
   onboarding_completed: boolean;
+  needs_profile_completion?: boolean;
   preferred_retailers: RetailerId[];
   preferred_categories: Category[];
   price_alerts_enabled: boolean;

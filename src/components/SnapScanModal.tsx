@@ -170,7 +170,7 @@ export const SnapScanModal: React.FC<SnapScanModalProps> = ({
     setSelectedImage(imgUrl);
     setStep('processing');
     setProcessingProgress(15);
-    setProcessingStage('Uploading image to Supabase Storage...');
+    setProcessingStage('Uploading image for AI analysis...');
 
     const stages = [
       { progress: 35, text: 'Gemini AI reading shelf label price & discounts...' },

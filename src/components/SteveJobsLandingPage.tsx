@@ -14,23 +14,61 @@ import {
   Mail,
   X,
   Store,
+  Download,
+  Lock,
 } from 'lucide-react';
 import { IShoppIcon } from './IShoppIcon.js';
+import { RetailerLogo, LEADING_RETAILERS } from './RetailerLogo.js';
+import { PWAInstallModal } from './PWAInstallModal.js';
+import { usePWAInstall } from '../hooks/usePWAInstall.js';
 
 interface SteveJobsLandingPageProps {
   onActivateAccount: (contactInfo: string) => void;
   onEnterAppDirectly: () => void;
+  onOpenScan?: () => void;
+  onOpenRadar?: () => void;
+  onOpenPriceIntelligence?: () => void;
+  onOpenAssistant?: () => void;
+  onOpenShoppingList?: () => void;
+  onOpenAuth?: () => void;
+  onOpenAdminLogin?: () => void;
+  shoppingListCount?: number;
 }
 
 export const SteveJobsLandingPage: React.FC<SteveJobsLandingPageProps> = ({
   onActivateAccount,
   onEnterAppDirectly,
+  onOpenScan,
+  onOpenRadar,
+  onOpenPriceIntelligence,
+  onOpenAssistant,
+  onOpenShoppingList,
+  onOpenAuth,
+  onOpenAdminLogin,
+  shoppingListCount = 0,
 }) => {
   const [contactInput, setContactInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sentToContact, setSentToContact] = useState<string | null>(null);
   const [showSimulatedBanner, setShowSimulatedBanner] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
+  // Hook into browser PWA install capabilities
+  const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
+
+  const handleGetAppClick = async () => {
+    // If the browser provides a native beforeinstallprompt, trigger it directly or open guided install modal
+    if (isInstallable) {
+      const outcome = await install();
+      if (!outcome) {
+        setIsInstallModalOpen(true);
+      }
+    } else {
+      // Shows the tailored mobile install modal (iOS Safari Add to Home Screen steps or Android/Desktop instructions)
+      setIsInstallModalOpen(true);
+    }
+  };
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -72,33 +110,158 @@ export const SteveJobsLandingPage: React.FC<SteveJobsLandingPageProps> = ({
       {/* Top Keynote Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-rose-600/20 via-orange-600/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
-      {/* Minimalist Apple-Style Header */}
-      <header className="relative z-30 w-full border-b border-white/10 bg-black/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* Minimalist Apple-Style Header with All Navigation Buttons */}
+      <header className="sticky top-0 z-30 w-full border-b border-white/10 bg-black/85 backdrop-blur-xl pt-safe">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3">
+          {/* Brand Logo */}
+          <div className="flex items-center gap-3 shrink-0">
             <IShoppIcon size={34} withGlow />
             <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
               iShopp <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/90 border border-white/10">AI</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-3 lg:gap-5 text-xs font-semibold text-white/70 shrink-0">
             <button
-              onClick={onEnterAppDirectly}
-              className="text-xs font-medium text-white/70 hover:text-white transition-colors px-3 py-1.5 rounded-full hover:bg-white/5"
+              onClick={() => {
+                const el = document.getElementById('retailers-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-white transition-colors cursor-pointer"
             >
-              Preview App
+              Retailers
             </button>
             <button
               onClick={() => {
-                const el = document.getElementById('signup-section');
+                const el = document.getElementById('breakthroughs-section');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-4 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-white/90 transition-all shadow-md active:scale-95"
+              className="hover:text-white transition-colors cursor-pointer"
             >
-              Sign Up
+              Breakthroughs
             </button>
+            <button
+              onClick={onOpenRadar || onEnterAppDirectly}
+              className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <MapPin className="w-3.5 h-3.5 text-rose-400" />
+              <span>Radar</span>
+            </button>
+            <button
+              onClick={onOpenPriceIntelligence || onEnterAppDirectly}
+              className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Prices</span>
+            </button>
+            <button
+              onClick={onOpenAssistant || onEnterAppDirectly}
+              className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>AI Assistant</span>
+            </button>
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Scan button */}
+            <button
+              onClick={onOpenScan || onEnterAppDirectly}
+              id="landing-nav-scan-btn"
+              title="Scan Deals"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all active:scale-95 shrink-0"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Scan</span>
+            </button>
+
+            {/* Get App button (Prompts PWA Install & Home Screen icon save) */}
+            <button
+              onClick={handleGetAppClick}
+              id="landing-nav-get-app-btn"
+              className="text-xs font-black text-black bg-white hover:bg-white/90 px-3 sm:px-4 py-1.5 rounded-full transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+              title="Get iShopp app on your phone home screen"
+            >
+              <Download className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              <span>Get App</span>
+            </button>
+
+            {/* Sign In / Sign Up buttons */}
+            {onOpenAuth ? (
+              <button
+                onClick={onOpenAuth}
+                id="landing-nav-signin-btn"
+                className="px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-md active:scale-95 whitespace-nowrap hidden sm:inline-flex shrink-0 cursor-pointer"
+              >
+                Sign In / Up
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const el = document.getElementById('signup-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                id="landing-nav-signup-btn"
+                className="px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 text-white font-bold text-xs hover:opacity-90 transition-all shadow-md active:scale-95 whitespace-nowrap hidden sm:inline-flex shrink-0"
+              >
+                Sign Up
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Mobile Quick Navbar Strip (< md) */}
+        <div className="flex items-center gap-1.5 px-3 py-2 border-t border-white/10 bg-white/[0.03] md:hidden overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => {
+              const el = document.getElementById('retailers-section');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-[11px] font-semibold whitespace-nowrap shrink-0 border border-white/10"
+          >
+            Retailers
+          </button>
+          <button
+            onClick={() => {
+              const el = document.getElementById('breakthroughs-section');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-[11px] font-semibold whitespace-nowrap shrink-0 border border-white/10"
+          >
+            Breakthroughs
+          </button>
+          <button
+            onClick={onOpenRadar || onEnterAppDirectly}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 text-[11px] font-semibold whitespace-nowrap shrink-0 border border-rose-500/30"
+          >
+            <MapPin className="w-3 h-3 text-rose-400" />
+            <span>Store Radar</span>
+          </button>
+          <button
+            onClick={onOpenPriceIntelligence || onEnterAppDirectly}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-[11px] font-semibold whitespace-nowrap shrink-0 border border-emerald-500/30"
+          >
+            <TrendingDown className="w-3 h-3 text-emerald-400" />
+            <span>Price Tracker</span>
+          </button>
+          <button
+            onClick={onOpenAssistant || onEnterAppDirectly}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 text-[11px] font-semibold whitespace-nowrap shrink-0 border border-amber-500/30"
+          >
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span>AI Assistant</span>
+          </button>
+          <button
+            onClick={() => {
+              const el = document.getElementById('signup-section');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 text-white text-[11px] font-bold whitespace-nowrap shrink-0"
+          >
+            Sign Up
+          </button>
         </div>
       </header>
 
@@ -219,7 +382,7 @@ export const SteveJobsLandingPage: React.FC<SteveJobsLandingPageProps> = ({
       </section>
 
       {/* Steve Jobs 3-Act Breakthrough Grid */}
-      <section className="py-24 border-t border-white/10 bg-gradient-to-b from-black via-zinc-950 to-black px-6">
+      <section id="breakthroughs-section" className="py-24 border-t border-white/10 bg-gradient-to-b from-black via-zinc-950 to-black px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
@@ -266,18 +429,75 @@ export const SteveJobsLandingPage: React.FC<SteveJobsLandingPageProps> = ({
       </section>
 
       {/* Supported Supermarket Giants in South Africa */}
-      <section className="py-16 border-t border-white/10 bg-black text-center px-6">
-        <p className="text-xs uppercase tracking-widest text-white/40 font-semibold mb-8">
-          Intelligence across South Africa’s leading retailers
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-80 max-w-4xl mx-auto">
-          <span className="text-lg font-black tracking-wider text-white">CHECKERS</span>
-          <span className="text-lg font-black tracking-wider text-white">PICK N PAY</span>
-          <span className="text-lg font-black tracking-wider text-white">WOOLWORTHS</span>
-          <span className="text-lg font-black tracking-wider text-white">SHOPRITE</span>
-          <span className="text-lg font-black tracking-wider text-white">SPAR</span>
-          <span className="text-lg font-black tracking-wider text-white">DIS-CHEM</span>
-          <span className="text-lg font-black tracking-wider text-white">CLICKS</span>
+      <section id="retailers-section" className="py-16 sm:py-20 border-t border-white/10 bg-black text-center px-4 sm:px-6 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-white/40 font-bold mb-10">
+            Intelligence across South Africa’s leading retailers
+          </p>
+
+          {/* Keynote Brands Layout matching Screenshot with Logo & Name */}
+          <div className="space-y-3 sm:space-y-4 max-w-3xl mx-auto">
+            {/* Row 1: Checkers & Pick n Pay */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-500/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="checkers" size={38} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-base sm:text-lg font-black tracking-wider text-white block leading-tight">CHECKERS</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Sixty60 & Supermarkets</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-blue-500/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="picknpay" size={38} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-base sm:text-lg font-black tracking-wider text-white block leading-tight">PICK N PAY</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Smart Shopper & asap!</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Woolworths & Shoprite */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-zinc-400/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="woolworths" size={38} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-base sm:text-lg font-black tracking-wider text-white block leading-tight">WOOLWORTHS</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Food & WRewards</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="shoprite" size={38} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-base sm:text-lg font-black tracking-wider text-white block leading-tight">SHOPRITE</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Lower Prices & Xtra Savings</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: SPAR, Dis-Chem, Clicks */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-4 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-600/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="spar" size={36} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-sm sm:text-base font-black tracking-wider text-white block leading-tight">SPAR</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">SUPERSPAR & KWIKSPAR</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-4 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-teal-500/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="dischem" size={36} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-sm sm:text-base font-black tracking-wider text-white block leading-tight">DIS-CHEM</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Pharmacies & Wellness</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start gap-3.5 px-4 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-sky-500/30 transition-all group shadow-sm">
+                <RetailerLogo retailerId="clicks" size={36} className="group-hover:scale-105 transition-transform" />
+                <div className="text-left">
+                  <span className="text-sm sm:text-base font-black tracking-wider text-white block leading-tight">CLICKS</span>
+                  <span className="text-[10px] text-white/40 font-medium tracking-normal">Pharmacy & ClubCard</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -309,16 +529,48 @@ export const SteveJobsLandingPage: React.FC<SteveJobsLandingPageProps> = ({
       {/* Minimalist Footer */}
       <footer className="py-10 border-t border-white/10 text-center text-xs text-white/40 px-6">
         <p>© 2026 iShopp AI. Built for South African Shoppers. POPIA Compliant.</p>
-        <div className="mt-3 flex items-center justify-center gap-4">
-          <button onClick={onEnterAppDirectly} className="hover:text-white underline">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+          <button
+            onClick={handleGetAppClick}
+            id="footer-get-app-btn"
+            className="hover:text-rose-400 text-white/70 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <Download className="w-3 h-3 text-rose-500" />
+            <span>Get App (Install PWA)</span>
+          </button>
+          <span>•</span>
+          <button onClick={onEnterAppDirectly} className="hover:text-white underline cursor-pointer">
             Direct App Access
           </button>
           <span>•</span>
+          {onOpenAdminLogin && (
+            <>
+              <button
+                onClick={onOpenAdminLogin}
+                id="footer-admin-login-link"
+                className="hover:text-emerald-400 text-white/50 flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <Lock className="w-3 h-3 text-emerald-500" />
+                <span>Admin Login (/admin/login)</span>
+              </button>
+              <span>•</span>
+            </>
+          )}
           <span>Terms & Conditions</span>
           <span>•</span>
           <span>Privacy Policy</span>
         </div>
       </footer>
+
+      {/* PWA Home Screen Install Modal (Runs like native app from home screen icon) */}
+      <PWAInstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        isInstallable={isInstallable}
+        isIOS={isIOS}
+        onInstall={install}
+        onContinueToWeb={onEnterAppDirectly}
+      />
 
       {/* Simulated iOS Activation Link Banner & Modal */}
       {sentToContact && (

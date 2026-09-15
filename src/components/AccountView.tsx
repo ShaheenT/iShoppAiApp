@@ -15,6 +15,8 @@ import {
   Sparkles,
   HelpCircle,
   ExternalLink,
+  Terminal,
+  Database,
 } from 'lucide-react';
 import { UserProfile } from '../types/index.js';
 
@@ -22,16 +24,20 @@ interface AccountViewProps {
   user: UserProfile;
   onOpenAuth: () => void;
   onReplayOnboarding: () => void;
+  onOpenProfileCompletion?: () => void;
   onOpenMyUploads?: () => void;
   onViewLandingPage?: () => void;
+  onOpenAdminDashboard?: () => void;
 }
 
 export const AccountView: React.FC<AccountViewProps> = ({
   user,
   onOpenAuth,
   onReplayOnboarding,
+  onOpenProfileCompletion,
   onOpenMyUploads,
   onViewLandingPage,
+  onOpenAdminDashboard,
 }) => {
   const allBadges = [
     { name: 'First Snap', desc: 'Photographed your first shelf special', icon: '📸', unlocked: true },
@@ -58,18 +64,41 @@ export const AccountView: React.FC<AccountViewProps> = ({
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight truncate">
-                {user.full_name}
-              </h2>
-              <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h2 className="text-lg font-black text-slate-900 tracking-tight truncate">
+                  {user.full_name}
+                </h2>
+                <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              </div>
+
+              {onOpenProfileCompletion && (
+                <button
+                  type="button"
+                  id="account-edit-profile-btn"
+                  onClick={onOpenProfileCompletion}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+                >
+                  Edit Profile
+                </button>
+              )}
             </div>
 
             <p className="text-xs text-slate-500 font-semibold">{user.username}</p>
+            {user.email && (
+              <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
+            )}
+            {user.mobile_number && (
+              <p className="text-[11px] text-emerald-600 font-medium truncate">{user.mobile_number}</p>
+            )}
 
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
                 Level 12 • Trusted Contributor
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Cloud Synced
               </span>
             </div>
           </div>
@@ -183,6 +212,28 @@ export const AccountView: React.FC<AccountViewProps> = ({
             <span className="text-xs font-bold text-emerald-600">Active</span>
           </div>
 
+          {/* Personal Information & Profile Photo */}
+          {onOpenProfileCompletion && (
+            <button
+              onClick={onOpenProfileCompletion}
+              id="account-open-personal-info-row"
+              className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Personal Information</div>
+                  <div className="text-[11px] text-slate-500">
+                    Full name, profile photo, bio & mobile number
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </button>
+          )}
+
           {/* Replay Onboarding */}
           <button
             onClick={onReplayOnboarding}
@@ -199,6 +250,33 @@ export const AccountView: React.FC<AccountViewProps> = ({
             </div>
             <ChevronRight className="w-4 h-4 text-slate-300" />
           </button>
+
+          {/* iShopp Admin Login (Internal Management & Supabase Cluster) */}
+          {onOpenAdminDashboard && (
+            <button
+              onClick={onOpenAdminDashboard}
+              id="account-open-admin-dashboard-btn"
+              className="w-full p-4 flex items-center justify-between text-left hover:bg-emerald-50/60 transition-colors border-t border-slate-100 group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center shadow-xs group-hover:bg-slate-800 transition-colors">
+                  <Terminal className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900">iShopp Admin Portal</span>
+                    <span className="text-[10px] font-extrabold uppercase bg-slate-900 text-emerald-400 px-2 py-0.5 rounded-md font-mono">
+                      /admin/login
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Supabase architecture, live PostgreSQL DDL, RLS, specials moderation & POPIA
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-colors" />
+            </button>
+          )}
 
           {/* View Steve Jobs Landing Page */}
           {onViewLandingPage && (

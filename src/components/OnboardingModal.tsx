@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import {
   Sparkles,
+  Camera,
+  Zap,
+  Share2,
+  TrendingDown,
+  ShoppingBag,
+  ArrowRight,
   Check,
   MapPin,
-  Bell,
-  ArrowRight,
-  Store,
-  ShoppingBag,
-  Camera,
-  ShieldCheck,
+  CheckCircle2,
+  Compass,
   X,
 } from 'lucide-react';
+import { IShoppIcon } from './IShoppIcon.js';
 import { Category, RetailerId } from '../types/index.js';
 import { RETAILERS } from '../../server/seedData.js';
 
@@ -31,18 +34,16 @@ interface OnboardingModalProps {
   onLaunchScan: () => void;
 }
 
-const ALL_CATEGORIES: Category[] = [
+const PRIMARY_CATEGORIES: Category[] = [
   'Groceries',
   'Fresh Produce',
   'Meat',
   'Frozen',
   'Household',
   'Baby',
-  'Beauty',
-  'Pharmacy',
-  'Electronics',
-  'Clothing',
 ];
+
+const CITIES = ['Cape Town', 'Johannesburg', 'Durban', 'Pretoria', 'Stellenbosch'];
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
@@ -50,37 +51,33 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   onComplete,
   onLaunchScan,
 }) => {
+  // Step 1: Welcome & The 4 Pillars (Snap • Scan • Share • Save)
+  // Step 2: Customise your store & local area
+  // Step 3: Fast start (Ready to Save & Shop)
   const [step, setStep] = useState<number>(1);
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([
-    'Groceries',
-    'Fresh Produce',
-    'Meat',
-  ]);
   const [selectedRetailers, setSelectedRetailers] = useState<RetailerId[]>([
     'picknpay',
     'checkers',
     'woolworths',
   ]);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([
+    'Groceries',
+    'Fresh Produce',
+    'Meat',
+  ]);
   const [selectedCity, setSelectedCity] = useState<string>('Cape Town');
-  const [locationGranted, setLocationGranted] = useState<boolean>(true);
-  const [notifications, setNotifications] = useState({
-    priceAlerts: true,
-    nearbySpecials: true,
-    newDeals: true,
-    reminders: false,
-  });
 
   if (!isOpen) return null;
+
+  const toggleRetailer = (id: RetailerId) => {
+    setSelectedRetailers((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    );
+  };
 
   const toggleCategory = (cat: Category) => {
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-    );
-  };
-
-  const toggleRetailer = (retId: RetailerId) => {
-    setSelectedRetailers((prev) =>
-      prev.includes(retId) ? prev.filter((r) => r !== retId) : [...prev, retId]
     );
   };
 
@@ -89,7 +86,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       categories: selectedCategories,
       retailers: selectedRetailers,
       city: selectedCity,
-      notifications,
+      notifications: {
+        priceAlerts: true,
+        nearbySpecials: true,
+        newDeals: true,
+        reminders: false,
+      },
     });
     onClose();
     if (launchScanDirectly) {
@@ -98,351 +100,302 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div
+      id="onboarding-modal-backdrop"
+      className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md overflow-y-auto overscroll-contain p-3 sm:p-5 flex min-h-full items-start sm:items-center justify-center py-4 sm:py-8 animate-in fade-in duration-200"
+    >
       <div
         id="onboarding-modal"
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        className="bg-white w-full max-w-lg my-auto rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] animate-in zoom-in-95 duration-200 shrink-0"
       >
-        {/* Step Progress Bar */}
-        <div className="w-full bg-slate-100 h-1.5 flex">
-          {[1, 2, 3, 4, 5, 6].map((s) => (
+        {/* Visual Progress Bar (3 Smooth Steps) */}
+        <div className="w-full bg-slate-100 h-1.5 flex shrink-0">
+          {[1, 2, 3].map((s) => (
             <div
               key={s}
-              className={`flex-1 h-full transition-colors duration-300 ${
+              className={`flex-1 h-full transition-all duration-300 ${
                 s <= step ? 'bg-emerald-500' : 'bg-transparent'
               }`}
             />
           ))}
         </div>
 
-        {/* Modal Header */}
-        <div className="px-6 pt-5 pb-2 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Step {step} of 6
-          </span>
-          {step > 1 && (
-            <button
-              onClick={() => handleFinish(false)}
-              className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-            >
-              Skip
-            </button>
-          )}
+        {/* Modal Top Header */}
+        <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-2 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Step {step} of 3
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-extrabold text-emerald-700">
+              {step === 1 && 'Welcome'}
+              {step === 2 && 'Your Stores'}
+              {step === 3 && 'Ready to Save'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => handleFinish(false)}
+            className="text-xs font-bold text-slate-400 hover:text-slate-600 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            Skip to App
+          </button>
         </div>
 
-        {/* Dynamic Step Content */}
-        <div className="px-6 py-4 flex-1 overflow-y-auto">
-          {/* SCREEN 1: Welcome to iShopp */}
+        {/* Modal Dynamic Body */}
+        <div className="px-5 sm:px-6 py-4 flex-1 overflow-y-auto overscroll-contain">
+          {/* STEP 1: VALUE PROPOSITION - SNAP, SCAN, SHARE, SAVE */}
           {step === 1 && (
-            <div className="space-y-6 text-center py-4">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <Sparkles className="w-10 h-10 animate-bounce-short" />
+            <div className="space-y-6 text-center py-2">
+              <div className="w-18 h-18 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-rose-500 p-0.5 shadow-xl shadow-emerald-500/20 flex items-center justify-center">
+                <div className="w-full h-full bg-white rounded-[22px] flex items-center justify-center">
+                  <IShoppIcon size={42} withGlow />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                  Welcome to iShopp.
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Welcome to iShopp
                 </h2>
-                <p className="text-base font-semibold text-emerald-600">
-                  Your smarter way to shop.
+                <p className="text-sm font-bold text-emerald-600 mt-1">
+                  Snap. Scan. Share. Save.
                 </p>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto pt-1 leading-relaxed">
-                  Never miss a special again. Join South Africa's community-powered retail intelligence network.
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-2 leading-relaxed">
+                  South Africa's community-driven retail intelligence network. Never overpay on groceries again.
                 </p>
               </div>
 
-              {/* 4 Pillars Mini Cards */}
-              <div className="grid grid-cols-4 gap-2 pt-2">
-                <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-                  <div className="text-xs font-black text-slate-800">SNAP</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Photo</div>
+              {/* 4 Pillars Explained Simply */}
+              <div className="grid grid-cols-2 gap-2.5 text-left pt-1">
+                {/* 1. SNAP */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-200 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-black text-xs mb-2">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <div className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                    1. SNAP
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Take a photo of any grocery deal, yellow tag, or paper flyer.
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-                  <div className="text-xs font-black text-slate-800">SCAN</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">AI OCR</div>
+
+                {/* 2. SCAN */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-200 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xs mb-2">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                    2. SCAN
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Instant AI extracts item, price, unit savings, and store branch.
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-                  <div className="text-xs font-black text-slate-800">SHARE</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Publish</div>
+
+                {/* 3. SHARE */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-200 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-black text-xs mb-2">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                  <div className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                    3. SHARE
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Specials publish to neighbors in real time. Earn reward points.
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-                  <div className="text-xs font-black text-emerald-700">SAVE</div>
-                  <div className="text-[10px] text-emerald-600 mt-0.5">Together</div>
+
+                {/* 4. SAVE */}
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 hover:border-emerald-300 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-xs mb-2 shadow-xs">
+                    <TrendingDown className="w-4 h-4" />
+                  </div>
+                  <div className="text-xs font-black text-emerald-800 uppercase tracking-wide">
+                    4. SAVE
+                  </div>
+                  <div className="text-[11px] text-emerald-700 mt-0.5 leading-snug">
+                    Build smart shopping lists, optimize routes, or order delivery.
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setStep(2)}
                 id="onboarding-step1-next"
-                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
-                <span>Let’s Go</span>
+                <span>Get Started in 30 Seconds</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* SCREEN 2: What do you shop for? */}
+          {/* STEP 2: STORES & CITY */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-5 py-1">
               <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  What do you shop for?
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  Where do you shop?
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Select your usual categories to tailor your deals feed.
+                  We customize your daily feed based on your supermarkets and city.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {ALL_CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategories.includes(cat);
-                  return (
+              {/* City Selection */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Your primary metro area:</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {CITIES.map((c) => (
                     <button
-                      key={cat}
+                      key={c}
                       type="button"
-                      onClick={() => toggleCategory(cat)}
-                      className={`p-3 rounded-2xl border text-left flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-emerald-500 bg-emerald-50/60 text-emerald-950'
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                      onClick={() => setSelectedCity(c)}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center ${
+                        selectedCity === c
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      <span>{cat}</span>
-                      <span
-                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
-                          isSelected
-                            ? 'bg-emerald-500 text-white'
-                            : 'border border-slate-300'
-                        }`}
-                      >
-                        {isSelected && <Check className="w-2.5 h-2.5" />}
-                      </span>
+                      {c}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
 
-              <button
-                onClick={() => setStep(3)}
-                id="onboarding-step2-next"
-                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* SCREEN 3: Which stores do you use? */}
-          {step === 3 && (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  Which stores do you use?
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Pick your favorite South African supermarkets to track specials.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                {RETAILERS.map((ret) => {
-                  const isSelected = selectedRetailers.includes(ret.id);
-                  return (
-                    <button
-                      key={ret.id}
-                      type="button"
-                      onClick={() => toggleRetailer(ret.id)}
-                      className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 text-xs font-bold transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-emerald-500 bg-emerald-50/60 text-emerald-950'
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <span
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: ret.primaryColor }}
-                      />
-                      <span className="truncate flex-1">{ret.name}</span>
-                      <span
-                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 ${
-                          isSelected
-                            ? 'bg-emerald-500 text-white'
-                            : 'border border-slate-300'
-                        }`}
-                      >
-                        {isSelected && <Check className="w-2.5 h-2.5" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => setStep(4)}
-                id="onboarding-step3-next"
-                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* SCREEN 4: Location Permission */}
-          {step === 4 && (
-            <div className="space-y-6 text-center py-2">
-              <div className="w-16 h-16 mx-auto rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <MapPin className="w-8 h-8" />
-              </div>
-
-              <div className="space-y-1.5">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  See specials near you.
-                </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                  Location enables live nearby deals, accurate distance calculation (e.g., 1.4 km away), store branch discovery, and turn-by-turn navigation.
-                </p>
-              </div>
-
-              {/* City Selector Fallback */}
-              <div className="text-left bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Select your primary metro area:
-                </label>
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800"
-                >
-                  <option value="Cape Town">Cape Town (Sea Point, Waterfront, Gardens)</option>
-                  <option value="Johannesburg">Johannesburg (Sandton, Rosebank, CBD)</option>
-                  <option value="Durban">Durban (Umhlanga, Morningside)</option>
-                  <option value="Pretoria">Pretoria (Menlyn, Brooklyn)</option>
-                  <option value="Stellenbosch">Stellenbosch</option>
-                </select>
-              </div>
-
-              <button
-                onClick={() => {
-                  setLocationGranted(true);
-                  setStep(5);
-                }}
-                id="onboarding-step4-next"
-                className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <MapPin className="w-4 h-4" />
-                <span>Enable Location & Continue</span>
-              </button>
-            </div>
-          )}
-
-          {/* SCREEN 5: Notifications */}
-          {step === 5 && (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  Want to know when prices drop?
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Choose which alerts keep you updated on grocery savings.
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                <label className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer">
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">Price Drop Alerts</div>
-                    <div className="text-[11px] text-slate-500">When staple goods reach their lowest price</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.priceAlerts}
-                    onChange={(e) =>
-                      setNotifications((prev) => ({ ...prev, priceAlerts: e.target.checked }))
-                    }
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer">
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">Nearby Specials</div>
-                    <div className="text-[11px] text-slate-500">Deals discovered within 3 km of you</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.nearbySpecials}
-                    onChange={(e) =>
-                      setNotifications((prev) => ({ ...prev, nearbySpecials: e.target.checked }))
-                    }
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer">
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">New Verified Deals</div>
-                    <div className="text-[11px] text-slate-500">Specials shared by Trusted Contributors</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.newDeals}
-                    onChange={(e) =>
-                      setNotifications((prev) => ({ ...prev, newDeals: e.target.checked }))
-                    }
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                </label>
-              </div>
-
-              <button
-                onClick={() => setStep(6)}
-                id="onboarding-step5-next"
-                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* SCREEN 6: You're ready */}
-          {step === 6 && (
-            <div className="space-y-6 text-center py-4">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                <Check className="w-10 h-10 stroke-[3]" />
-              </div>
-
+              {/* Retailer Grid */}
               <div className="space-y-2">
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                  You’re ready.
+                <label className="text-xs font-bold text-slate-700 block">
+                  Favorite Supermarkets:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {RETAILERS.map((ret) => {
+                    const isSelected = selectedRetailers.includes(ret.id);
+                    return (
+                      <button
+                        key={ret.id}
+                        type="button"
+                        onClick={() => toggleRetailer(ret.id)}
+                        className={`p-2.5 rounded-xl border text-left flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-950 shadow-2xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: ret.primaryColor }}
+                        />
+                        <span className="truncate flex-1">{ret.name}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Key Categories */}
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Usual Shopping Categories:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRIMARY_CATEGORIES.map((cat) => {
+                    const isSelected = selectedCategories.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          isSelected
+                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            : 'bg-slate-100 text-slate-600 border border-transparent hover:bg-slate-200'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="py-3 px-4 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  id="onboarding-step2-next"
+                  className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                >
+                  <span>Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: READY TO SAVE & EASY SHOPPING */}
+          {step === 3 && (
+            <div className="space-y-6 text-center py-2">
+              <div className="w-18 h-18 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                  You’re All Set!
                 </h3>
-                <p className="text-base font-bold text-emerald-600">
-                  Never miss a special again.
+                <p className="text-sm font-bold text-emerald-600 mt-0.5">
+                  Save time & money in {selectedCity}
                 </p>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                  Start by scanning a shelf price tag or exploring live specials near you in {selectedCity}.
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-2 leading-relaxed">
+                  Start scanning grocery tags, replenish finished pantry items from home, or check the lowest prices before you head out.
                 </p>
               </div>
 
-              <div className="space-y-3 pt-2">
+              {/* Innovative Feature Highlights */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 p-3.5 rounded-2xl text-left space-y-2">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+                  <ShoppingBag className="w-4 h-4 text-emerald-600" />
+                  <span>Next-Gen Grocery Features:</span>
+                </div>
+                <div className="text-[11px] text-slate-600 space-y-1 pl-6 list-disc">
+                  <div>• <strong>Home Pantry Scan:</strong> Point camera at empty milk cartons to add to list.</div>
+                  <div>• <strong>D3 Route Cartography:</strong> Travel the shortest distance between stores.</div>
+                  <div>• <strong>3 Delivery Tiers:</strong> Compare walking vs. Concierge Multi-Store delivery.</div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 pt-1">
                 <button
                   onClick={() => handleFinish(true)}
                   id="onboarding-action-scan"
-                  className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Scan a Special</span>
+                  <span>Scan a Price Tag Now</span>
                 </button>
 
                 <button
                   onClick={() => handleFinish(false)}
                   id="onboarding-action-explore"
-                  className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                  className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer"
                 >
-                  Explore Deals Feed
+                  Explore Today's Verified Specials
                 </button>
               </div>
             </div>
